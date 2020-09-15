@@ -29,3 +29,13 @@ class PurchaseDataParamSerializer(serializers.Serializer):
         last_day = calendar.monthrange(end_date.year, end_date.month)[1]
         end_date = end_date.replace(day=last_day)
         return end_date.date()
+
+    def validate(self, data):
+        validated_data = super(
+            PurchaseDataParamSerializer, self
+        ).validate(data)
+        if validated_data['start_date'] > validated_data['end_date']:
+            raise serializers.ValidationError(
+                "Start Date cannot be after end date"
+            )
+        return validated_data

@@ -118,9 +118,13 @@
                 return;
             }
             
-            document.getElementById("error-message").innerHTML = ""
             start_date = start_year + "-" + start_month;
             end_date = end_year + "-" + end_month;
+            if (start_date > end_date) {
+                document.getElementById("error-message").innerHTML = "Start date cannot be after end date"
+                return;
+            }
+            document.getElementById("error-message").innerHTML = ""
             loadChart(start_date, end_date);
         }
 
