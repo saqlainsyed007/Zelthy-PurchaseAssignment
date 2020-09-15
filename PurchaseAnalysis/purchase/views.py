@@ -1,5 +1,7 @@
+from datetime import timedelta
 from django.db.models import CharField, F, Func, Sum, Value
 from django.db.models.functions import TruncMonth, TruncYear
+from django.views.generic import TemplateView
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -12,6 +14,23 @@ from purchase.serializers import PurchaseDataParamSerializer
 class PurchaseDataAPIView(APIView):
     permission_classes = []
     authentication_classes = []
+
+    @staticmethod
+    def format_data_for_chart(start_date, end_date, purchases_data):
+        formatted_data = {}
+        names = set(purchases_data.values_list('purchaser_name', flat=True))
+        for item in purchases_data:
+            purchaser_name = item['purchaser_name']
+            purchase_date = item['purchase_date']
+            total_quantity = item['total_quantity']
+            # Create data template. All keys must be present.
+            if purchase_date not in formatted_data:
+                formatted_data[purchase_date] = {
+                    'purchase_date': purchase_date,
+                    **{name: 0 for name in names}
+                }
+            formatted_data[purchase_date][purchaser_name] = total_quantity
+        return formatted_data.values()
 
     def get(self, request):
         param_serializer = PurchaseDataParamSerializer(
@@ -57,4 +76,12 @@ class PurchaseDataAPIView(APIView):
             "purchaser_name", "purchase_date", "total_quantity",
         )
 
+        purchases_data = self.format_data_for_chart(
+            start_date, end_date, purchases_data,
+        )
+
         return Response(purchases_data)
+
+
+class PurchaseDataAnalysisView(TemplateView):
+    template_name = "purchase/analyse.html"
